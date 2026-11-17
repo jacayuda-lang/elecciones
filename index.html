@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparativa encuestas elecciones generales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Papeleta: fondo papel, tinta oscura, sello azul pizarra. Hemiciclo y mapa arriba, ficha de provincia debajo, todo en una columna. */
+:root{
+  --paper:#f4f3ee; --card:#fffefa; --ink:#1c2128; --muted:#5d6570; --line:#d9d7cd;
+  --accent:#27466e; --accent-soft:#e3e9f2; --land:#e4e2da;
+  --good:#1e7a46; --warn:#a86700; --bad:#b3261e;
+  --display:"Newsreader", Georgia, "Times New Roman", serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#15181d; --card:#1d2128; --ink:#e9e8e3; --muted:#a2a8b1; --line:#333944;
+    --accent:#8fb0dc; --accent-soft:#25303f; --land:#2a2f37;
+    --good:#5cc489; --warn:#e3a640; --bad:#ef7b72; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#15181d; --card:#1d2128; --ink:#e9e8e3; --muted:#a2a8b1; --line:#333944;
+  --accent:#8fb0dc; --accent-soft:#25303f; --land:#2a2f37;
+  --good:#5cc489; --warn:#e3a640; --bad:#ef7b72; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:400 16px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:820px;margin:0 auto;padding:26px 16px 48px;display:flex;flex-direction:column;gap:24px}
+h1,h2,h3{font-family:var(--display);font-weight:650;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,6vw,42px)}
+h2{font-size:23px}
+h3{font-size:19px}
+.kicker{font:500 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--muted);max-width:62ch;margin:10px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.num{font-variant-numeric:tabular-nums}
+.sticky{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);margin:0 -16px;padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;background:var(--card)}
+.seg button{font:500 14px var(--body);border:0;background:transparent;color:var(--muted);padding:7px 13px;border-radius:999px;cursor:pointer;transition:background .25s,color .25s}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--card)}
+button:focus-visible,select:focus-visible,path.prov:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+/* hemiciclo */
+.hemi{width:100%;max-width:560px;margin:0 auto;display:block}
+.hemi circle{transition:fill .6s ease}
+.hemi-center{font:650 44px var(--display);fill:var(--ink)}
+.hemi-sub{font:500 12px var(--mono);fill:var(--muted);letter-spacing:.05em}
+.blocs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bloc{border-left:4px solid var(--line);padding:4px 0 4px 10px}
+.bloc b{display:block;font:650 30px/1.1 var(--display)}
+.bloc small{color:var(--muted);font-size:13px}
+.bloc.der{border-color:#1d6fd1}.bloc.izq{border-color:#e1251b}.bloc.bis{border-color:#7a7f87}
+.majchip{align-self:center;font:500 13px var(--mono);padding:6px 12px;border-radius:999px;background:var(--accent-soft);color:var(--ink);transition:background .3s}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend b{color:var(--ink);font-variant-numeric:tabular-nums}
+/* mapa */
+.mapbox{position:relative}
+.map{width:100%;height:auto;display:block}
+.map path.prov{stroke:var(--card);stroke-width:1;cursor:pointer;transition:opacity .2s}
+.map path.prov:hover{opacity:.8}
+.map path.prov.sel{stroke:var(--ink);stroke-width:2.5}
+.map .cm{cursor:pointer;stroke:var(--card);stroke-width:1.5;transition:fill .5s}
+.map .cm.sel{stroke:var(--ink);stroke-width:2.5}
+.map .canbox{fill:none;stroke:var(--line);stroke-dasharray:4 4}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:13px;padding:6px 9px;border-radius:6px;transform:translate(-50%,-120%);white-space:nowrap;opacity:0;transition:opacity .15s}
+.scale{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.scale i{display:inline-block;width:120px;height:8px;border-radius:4px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:500 12px var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:right;padding:6px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td.num{white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}
+.tablewrap{overflow-x:auto}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.pill{display:inline-block;font:500 11px var(--mono);padding:2px 7px;border-radius:999px;border:1px solid currentColor;margin-left:6px;white-space:nowrap}
+.in{color:var(--good)}.out{color:var(--warn)}
+.vbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;min-width:60px}
+.vbar span{display:block;height:100%;border-radius:4px;transition:width .6s ease}
+select{font:400 16px var(--body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+label{font-weight:500;font-size:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.verdict{border-radius:10px;padding:14px 16px;background:var(--accent-soft);display:flex;flex-direction:column;gap:6px;animation:pop .35s ease}
+.verdict.warn{border-left:4px solid var(--warn)}
+.verdict.good{border-left:4px solid var(--good)}
+.verdict.calm{border-left:4px solid var(--muted)}
+.verdict p{margin:0}
+.verdict strong{font-family:var(--display);font-size:20px;font-weight:650}
+.seats{display:flex;flex-wrap:wrap;gap:6px}
+.seat{width:24px;height:24px;border-radius:50%;animation:pop .35s ease backwards}
+.seat.last{outline:2px dashed var(--ink);outline-offset:2px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
+.opt .sub{grid-column:1/-1;color:var(--muted);font-size:13px}
+.tag{font:500 12px var(--mono)}
+.t1{color:var(--bad)}.t2{color:var(--warn)}.t3{color:var(--muted)}.tg{color:var(--good)}
+.note{color:var(--muted);font-size:13px;margin:0}
+.notes{font-size:14px;color:var(--muted);display:flex;flex-direction:column;gap:8px}
+.notes p{margin:0;max-width:65ch}
+.notes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;max-width:65ch}
+.notes a{color:var(--accent)}
+footer{font:500 12px var(--mono);color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.hotbtn{font:600 14px var(--body);border:0;border-radius:999px;padding:9px 16px;background:var(--ink);color:var(--paper);cursor:pointer}
+.ov{position:fixed;inset:0;z-index:20;background:rgba(10,12,16,.45);display:flex;align-items:flex-end;justify-content:center}
+.ov[hidden]{display:none}
+.sheet{background:var(--card);width:100%;max-width:820px;max-height:88%;overflow:auto;border-radius:16px 16px 0 0;padding:18px 16px 28px;display:flex;flex-direction:column;gap:12px;animation:up .3s ease}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.close{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;width:36px;height:36px;font-size:16px;cursor:pointer}
+.hotlist{display:flex;flex-direction:column;gap:6px}
+.hgroup{font:500 12px var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:8px}
+.hrow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);text-align:left;font:inherit;cursor:pointer;width:100%}
+.hrow:hover{border-color:var(--accent)}
+.hrow .sub{grid-column:1/-1;font-size:13px;color:var(--muted)}
+.hrow .cross{font:500 11px var(--mono);color:var(--accent);margin-left:6px}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@media (max-width:440px){.bloc b{font-size:24px}th,td{padding:6px 4px}.seg button{padding:7px 10px;font-size:13px}}
+@media (prefers-reduced-motion:reduce){*,*::before{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <div class="kicker">Elecciones generales · 29 de noviembre de 2026 · Realizado por JAC</div>
+    <h1>¿Dónde vale más tu voto según el CIS?</h1>
+    <p class="lede">La macroencuesta preelectoral del CIS (45.074 entrevistas, campo del 7 al 30 de octubre) llevada provincia a provincia. Toca una provincia en el mapa para ver qué escaño está en el aire.</p>
+  </header>
+
+  <div class="sticky">
+    <div class="seg" role="group" aria-label="Fuente de los datos">
+      <button type="button" data-src="c" aria-pressed="true">CIS</button>
+      <button type="button" data-src="b" aria-pressed="false">Media de encuestas</button>
+    </div>
+    <div class="seg" role="group" aria-label="Bloque al que quieres ayudar">
+      <button type="button" data-bloc="izq" aria-pressed="true">Izquierda</button>
+      <button type="button" data-bloc="der" aria-pressed="false">Derecha</button>
+    </div>
+    <button type="button" class="hotbtn" id="hotbtn">Escaños en juego</button>
+  </div>
+
+  <section class="card" aria-labelledby="t-nac">
+    <h2 id="t-nac">Congreso: 350 escaños</h2>
+    <svg class="hemi" id="hemi" viewBox="0 0 400 215" role="img" aria-label="Hemiciclo con el reparto de escaños"></svg>
+    <span class="majchip" id="majchip"></span>
+    <div class="blocs" id="blocs"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="card" aria-labelledby="t-map">
+    <div class="row">
+      <h2 id="t-map">Mapa</h2>
+    </div>
+    <div class="mapbox">
+      <svg class="map" id="map" viewBox="0 0 800 700" role="group" aria-label="Mapa de provincias"></svg>
+      <div class="tip" id="tip"></div>
+    </div>
+    <div id="mapkey" class="note"></div>
+  </section>
+
+  <section class="card" aria-labelledby="t-prov" id="provcard">
+    <h2 id="t-prov">Tu provincia</h2>
+    <div class="field">
+      <label for="prov">Elige en la lista o toca el mapa</label>
+      <select id="prov"></select>
+    </div>
+    <div id="pres"></div>
+  </section>
+
+  <section class="card" aria-labelledby="t-tab">
+    <h2 id="t-tab">CIS frente a la media de encuestas</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Partido</th><th>Voto CIS</th><th>Horquilla CIS</th><th>Proyección CIS</th><th>Media encuestas</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="note">Proyección: escaños que salen al aplicar D'Hondt provincia a provincia con los porcentajes de esta página. La horquilla es la que publica el CIS.</p>
+  </section>
+
+  <section class="notes" aria-labelledby="t-met">
+    <h3 id="t-met">Cómo está hecho</h3>
+    <ul>
+      <li>Datos nacionales del CIS repartidos por provincia sobre el modelo de <a href="https://mapaelectoral.es">Mapa Electoral</a> (CC BY-SA 4.0, 15-11-2026).</li>
+      <li>Ajustado para que los escaños caigan en las horquillas del CIS: Vox 17,3 %, Frente Amplio 5,6 % y BNG 1,0 %.</li>
+      <li>D'Hondt con umbral del 3 % por provincia.</li>
+      <li>Soria ¡Ya! y Teruel Existe: resultado de 2023, fiabilidad baja.</li>
+      <li>Fuentes del CIS: <a href="https://www.democrata.es/politica/ampliacion-el-cis-situa-al-psoe-en-cabeza-con-el-33-y-frustra-la-mayoria-absoluta-de-un-bloque-pp-vox/">Demócrata</a>, <a href="https://www.moncloa.com/2026/11/12/cis-pp-vox-171-escanos-3466732/">Moncloa.com</a>. Mapa: IGN.</li>
+      <li>Es una proyección, no un resultado.</li>
+    </ul>
+  </section>
+
+  <div class="ov" id="ov" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="t-hot">
+      <div class="row"><h2 id="t-hot">Escaños en juego</h2><button type="button" class="close" id="ovclose" aria-label="Cerrar">✕</button></div>
+      <p class="note" id="hotsum"></p>
+      <div class="hotlist" id="hotlist"></div>
+    </div>
+  </div>
+
+  <footer><span>Datos a 17-11-2026</span><span>Realizado por JAC</span></footer>
+</main>
+
+<script>
+const D = {"a-coruna":{"n":"A Coruña","e":8,"p":[["PP",34.7,40.8],["PSOE",30.4,24.9],["BNG",17.9,15.2],["VOX",7.8,8.4],["FA",4.6,4.1],["POD",1.7,2.2]]},"alava":{"n":"Álava","e":4,"p":[["PSOE",33.0,27.1],["BILDU",25.8,21.5],["PP",15.0,17.7],["PNV",9.9,12.8],["VOX",6.7,7.2],["FA",6.6,5.9],["POD",2.3,3],["SALF",1,1]]},"albacete":{"n":"Albacete","e":4,"p":[["PSOE",35.2,28.9],["PP",31.8,37.4],["VOX",21.8,23.4],["FA",4.4,3.9],["SALF",2.3,2.3],["POD",1.1,1.5]]},"alicante":{"n":"Alicante","e":12,"p":[["PSOE",33.2,27.2],["PP",28.3,33.3],["VOX",21.3,22.9],["COMP",12.1,11],["SALF",2.4,2.4]]},"almeria":{"n":"Almería","e":6,"p":[["PP",30.2,35.5],["PSOE",28.0,23],["VOX",26.6,28.5],["FA",3.8,3.4],["AA",2.8,2.9],["SALF",2.7,2.7],["POD",0.9,1.2]]},"asturias":{"n":"Asturias","e":7,"p":[["PSOE",38.3,31.4],["PP",28.8,33.9],["VOX",18.2,19.5],["FA",9.1,8.1],["POD",2.1,2.8],["SALF",1.4,1.4]]},"avila":{"n":"Ávila","e":3,"p":[["PP",37.0,43.5],["PSOE",29.9,24.5],["VOX",22.0,23.6],["FA",3.4,3],["SALF",1.8,1.8],["POD",1.1,1.4]]},"badajoz":{"n":"Badajoz","e":5,"p":[["PSOE",41.8,34.3],["PP",31.3,36.8],["VOX",18.8,20.2],["FA",3.8,3.4],["SALF",1.5,1.5],["POD",1.1,1.5]]},"barcelona":{"n":"Barcelona","e":32,"p":[["PSOE",39.5,32.4],["ERC",20.3,17.8],["PP",11.8,13.9],["VOX",11.6,12.5],["FA",7.9,7],["JUNTS",6.4,8.3],["SALF",1.3,1.3]]},"bizkaia":{"n":"Bizkaia","e":8,"p":[["PSOE",31.2,25.6],["BILDU",27.6,23],["PNV",16.5,21.3],["PP",9.9,11.7],["FA",5.8,5.2],["VOX",4.7,5],["POD",2.0,2.6]]},"burgos":{"n":"Burgos","e":4,"p":[["PSOE",36.5,29.9],["PP",33.5,39.4],["VOX",18.6,20],["FA",5.3,4.7],["SALF",1.7,1.7],["POD",1.4,1.8]]},"caceres":{"n":"Cáceres","e":4,"p":[["PSOE",41.3,33.9],["PP",31.4,36.9],["VOX",19.0,20.4],["FA",3.7,3.3],["SALF",1.4,1.4],["POD",1.3,1.7]]},"cadiz":{"n":"Cádiz","e":8,"p":[["PSOE",30.6,25.1],["PP",24.4,28.7],["VOX",17.8,19.1],["AA",12.5,12.9],["FA",7.3,6.5],["SALF",2.3,2.3],["POD",1.4,1.9]]},"cantabria":{"n":"Cantabria","e":5,"p":[["PSOE",35.1,28.8],["PP",33.5,39.4],["VOX",18.9,20.3],["FA",4.7,4.2],["POD",1.4,1.9]]},"castellon":{"n":"Castellón","e":5,"p":[["PSOE",34.0,27.9],["PP",26.9,31.6],["VOX",21.2,22.7],["COMP",14.1,12.8],["SALF",2.1,2.1]]},"ceuta":{"n":"Ceuta","e":1,"p":[["PSOE",34.0,27.9],["VOX",29.9,32.1],["PP",27.7,32.6],["SALF",3.1,3.1]]},"ciudad-real":{"n":"Ciudad Real","e":5,"p":[["PSOE",36.5,29.9],["PP",32.3,38],["VOX",21.7,23.3],["FA",3.7,3.3],["POD",0.9,1.2]]},"cordoba":{"n":"Córdoba","e":6,"p":[["PSOE",31.6,25.9],["PP",27.8,32.7],["VOX",17.4,18.7],["FA",9.0,8],["AA",7.7,7.9],["SALF",2,2],["POD",1.3,1.7]]},"cuenca":{"n":"Cuenca","e":3,"p":[["PSOE",38.3,31.4],["PP",31.5,37],["VOX",21.7,23.3],["FA",3.6,3.2],["SALF",1.6,1.6],["POD",0.9,1.2]]},"gipuzkoa":{"n":"Gipuzkoa","e":6,"p":[["BILDU",41.7,34.8],["PSOE",27.9,22.9],["PNV",13.8,17.8],["PP",7.4,8.7],["FA",5.5,4.9],["VOX",3.7,4],["POD",1.9,2.5]]},"girona":{"n":"Girona","e":6,"p":[["PSOE",30.8,25.3],["ERC",20.6,18],["JUNTS",13.3,17.2],["VOX",11.1,11.9],["PP",8.2,9.7],["FA",5.4,4.8],["PACMA",1.2,1.2]]},"granada":{"n":"Granada","e":7,"p":[["PSOE",32.5,26.7],["PP",27.1,31.9],["VOX",20.1,21.6],["FA",6.6,5.9],["AA",6.3,6.5],["SALF",2.3,2.3],["POD",1.5,2]]},"guadalajara":{"n":"Guadalajara","e":3,"p":[["PSOE",32.9,27],["PP",27.8,32.7],["VOX",25.9,27.8],["FA",5.6,5],["SALF",2.6,2.6],["POD",1.5,2]]},"huelva":{"n":"Huelva","e":5,"p":[["PSOE",35.7,29.3],["PP",27.0,31.8],["VOX",18.0,19.3],["AA",7.5,7.7],["FA",6.0,5.3],["SALF",1.9,1.9],["POD",1.3,1.7]]},"huesca":{"n":"Huesca","e":3,"p":[["PSOE",36.6,30],["PP",30.4,35.8],["VOX",19.5,20.9],["FA",7.4,6.6],["SALF",2,2],["POD",1.6,2.1]]},"illes-balears":{"n":"Illes Balears","e":8,"p":[["PSOE",33.0,27.1],["PP",28.8,33.9],["VOX",21.5,23.1],["FA",8.3,7.4],["SALF",2.3,2.3]]},"jaen":{"n":"Jaén","e":5,"p":[["PSOE",37.2,30.5],["PP",28.9,34],["VOX",19.4,20.8],["FA",5.1,4.5],["AA",4.2,4.3],["SALF",1.8,1.8],["POD",1.0,1.3]]},"la-rioja":{"n":"La Rioja","e":4,"p":[["PSOE",38.0,31.2],["PP",36.3,42.7],["VOX",15.3,16.4],["FA",4.5,4],["SALF",1.6,1.6],["POD",1.1,1.5]]},"las-palmas":{"n":"Las Palmas","e":8,"p":[["PSOE",32.2,26.4],["VOX",20.0,21.5],["PP",19.9,23.4],["UPC",5.9,17],["CC",3.3,5.7],["SALF",2.5,2.5]]},"leon":{"n":"León","e":4,"p":[["PSOE",38.4,31.5],["PP",32.3,38],["VOX",19.4,20.8],["FA",4.0,3.6],["SALF",1.8,1.8],["POD",1.4,1.8]]},"lleida":{"n":"Lleida","e":4,"p":[["PSOE",31.5,25.8],["ERC",22.8,20],["JUNTS",12.2,15.8],["VOX",11.3,12.1],["PP",10.8,12.7],["FA",3.9,3.5]]},"lugo":{"n":"Lugo","e":4,"p":[["PP",39.9,46.9],["PSOE",30.8,25.3],["BNG",15.3,13],["VOX",7.3,7.8],["FA",2.1,1.9],["POD",0.8,1.1]]},"madrid":{"n":"Madrid","e":38,"p":[["PP",32.0,37.6],["PSOE",30.5,25],["VOX",19.7,21.1],["FA",8.9,7.9],["POD",2.4,3.2],["SALF",2.1,2.1]]},"malaga":{"n":"Málaga","e":11,"p":[["PSOE",29.3,24],["PP",27.1,31.9],["VOX",19.8,21.2],["AA",8.4,8.7],["FA",6.9,6.1],["SALF",2.8,2.8],["POD",1.4,1.9],["PACMA",1,1]]},"melilla":{"n":"Melilla","e":1,"p":[["PP",34.6,40.7],["PSOE",31.6,25.9],["VOX",23.9,25.6],["SALF",2.5,2.5]]},"murcia":{"n":"Murcia","e":10,"p":[["PP",31.4,36.9],["VOX",28.2,30.3],["PSOE",26.0,21.3],["FA",5.1,4.5],["SALF",2.6,2.6],["POD",1.3,1.7]]},"navarra":{"n":"Navarra","e":5,"p":[["PSOE",33.5,27.5],["BILDU",21.6,18],["PP",19.6,23],["VOX",11.0,11.8],["FA",7.1,6.3],["POD",2.1,2.8],["SALF",1.4,1.4]]},"ourense":{"n":"Ourense","e":4,"p":[["PP",40.1,47.2],["PSOE",30.5,25],["BNG",14.5,12.3],["VOX",7.8,8.4],["FA",2.2,2],["POD",0.8,1.1]]},"palencia":{"n":"Palencia","e":3,"p":[["PSOE",36.8,30.2],["PP",34.3,40.4],["VOX",19.0,20.4],["FA",3.8,3.4],["SALF",1.7,1.7],["POD",1.0,1.3]]},"pontevedra":{"n":"Pontevedra","e":7,"p":[["PSOE",33.9,27.8],["PP",32.2,37.9],["BNG",16.9,14.4],["VOX",7.5,8.1],["FA",5.6,5],["POD",1.7,2.2],["SALF",1,1]]},"salamanca":{"n":"Salamanca","e":4,"p":[["PP",38.0,44.7],["PSOE",31.7,26],["VOX",19.7,21.1],["FA",3.1,2.8],["SALF",1.6,1.6],["POD",1.1,1.4]]},"santa-cruz-de-tenerife":{"n":"Santa Cruz de Tenerife","e":7,"p":[["PSOE",30.5,25],["PP",22.3,26.2],["VOX",17.6,18.9],["CC",8.6,14.8],["UPC",2.9,8.5],["SALF",2.2,2.2],["PACMA",1.1,1.1]]},"segovia":{"n":"Segovia","e":3,"p":[["PP",35.6,41.9],["PSOE",32.3,26.5],["VOX",19.7,21.1],["FA",4.9,4.4],["SALF",1.8,1.8],["POD",1.3,1.7]]},"sevilla":{"n":"Sevilla","e":12,"p":[["PSOE",34.1,28],["PP",23.6,27.8],["VOX",16.1,17.3],["AA",11.4,11.8],["FA",8.1,7.2],["SALF",2.3,2.3],["POD",1.7,2.2]]},"soria":{"n":"Soria","e":2,"p":[["PSOE",29.3,24],["PP",28.8,33.9],["SY",19.1,19.1],["VOX",14.4,15.4],["FA",2.1,1.9],["SALF",1.2,1.2],["POD",0.8,1]]},"tarragona":{"n":"Tarragona","e":6,"p":[["PSOE",35.7,29.3],["ERC",20.6,18],["VOX",15.5,16.6],["PP",12.0,14.1],["JUNTS",7.3,9.5],["FA",5.3,4.7],["SALF",1.5,1.5],["PACMA",1.1,1.1]]},"teruel":{"n":"Teruel","e":3,"p":[["PSOE",30.8,25.3],["PP",27.5,32.4],["VOX",18.9,20.3],["TE",14.9,14.95],["SALF",1.9,1.9],["POD",0.8,1.1]]},"toledo":{"n":"Toledo","e":6,"p":[["PSOE",33.3,27.3],["PP",29.6,34.8],["VOX",25.9,27.8],["FA",4.5,4],["SALF",2,2],["POD",1.1,1.5]]},"valencia":{"n":"Valencia","e":16,"p":[["PSOE",33.3,27.3],["PP",25.7,30.2],["VOX",20.3,21.8],["COMP",16.8,15.3],["SALF",2.3,2.3]]},"valladolid":{"n":"Valladolid","e":5,"p":[["PSOE",34.3,28.1],["PP",32.7,38.5],["VOX",20.9,22.4],["FA",5.3,4.7],["SALF",1.9,1.9],["POD",1.4,1.9]]},"zamora":{"n":"Zamora","e":3,"p":[["PP",36.6,43],["PSOE",35.0,28.7],["VOX",19.1,20.5],["FA",3.0,2.7],["SALF",1.5,1.5],["POD",1.0,1.3]]},"zaragoza":{"n":"Zaragoza","e":7,"p":[["PSOE",33.6,27.6],["PP",29.0,34.1],["VOX",21.7,23.3],["FA",8.5,7.6],["SALF",2.2,2.2],["POD",1.8,2.4]]}};
+const MAP = {"caceres":["M158.1,301.1L154.2,296.8L155.4,289.5L145.4,280.4L144,275.4L154,277.4L169.8,276.2L171.4,267.3L175.7,263.4L177.5,255.5L170.2,243L178.6,237.8L192.2,238.2L194.9,233.3L211.6,225.1L216.5,233.4L224.2,238.4L231.3,234.1L234.1,237.8L244.1,244.5L253.4,240.2L253.6,249.8L249.9,265.1L253.9,264.2L254.5,272.7L261.6,270.4L262.9,275.8L259.5,283.2L271.9,296.6L263.8,296.9L262,301.2L252.6,300.2L250.1,310.5L238.7,309.3L239,315L230.8,312.5L218.8,317.3L218.4,312.6L212,318.8L200.4,310L181,307.8L182.2,298.9L167.5,291.2Z",[212.3,274.8]],"cadiz":["M196.5,463.1L198.5,456.2L220.9,459.8L223.6,455.8L233,452L237.1,456.1L243.1,451.2L244.6,454.9L251.7,449.6L255.1,454.7L259.9,450.8L262.7,457.2L258.3,462.3L253.3,458.4L250.2,471.9L239,481.2L244.5,480.8L253.5,495.3L248.8,505.5L248.1,505.6L243.9,510.7L234.7,514.5L224.9,509.9L218.8,502.9L212.6,502.9L203.4,489L203.5,477.6L196.7,474.4L192.4,467.5Z",[227.7,479.6]],"castellon":["M478,263.3L475.5,259.1L479.5,253.1L486.7,250.8L489.7,239L492.2,240.4L501.9,229.6L501.1,215.3L496.7,212.3L503,210.2L505.6,204.1L517.5,209.6L523.6,206.6L529.7,209.3L541.1,219.4L535.9,230.3L508.6,272.5L499,267.8L495.1,273.4L491.4,268.3L485.5,271.3L485.1,266Z",[509.7,239]],"ciudad-real":["M305.6,364.5L296.3,361L283.4,349.8L275.7,346.8L275,342.4L266.6,339.5L270.3,337.4L277.3,326.6L271,318.3L276.2,320.1L278.8,309.3L286.9,311.6L281.4,301.5L285.2,293.2L293,286.4L303.5,291.2L309.9,290.3L311.6,285.2L317.4,285.3L311.9,299.1L320.8,299.7L327.3,305.8L341.6,303.2L354.5,292.1L362,290.5L372.6,291.9L376.9,299.8L382.1,301.7L383.1,305L377.3,313.6L379.1,317.1L375.7,327.1L381.5,329.9L387.8,339.3L381.6,352.4L369.5,360.1L350.7,356.3L345.9,361.3L340.3,357.9L338.4,361.6L328.9,359.8L326.3,362.9L306.3,361ZM281.7,295.4L272.5,296.6L276.5,286.2L281.4,289Z",[328.4,327.2]],"cordoba":["M266.6,412.8L266.6,412.8L266.6,412.8ZM238.7,377.5L241.8,369.1L239.9,358.1L250,348.6L266.6,339.5L275,342.4L275.7,346.8L283.4,349.8L296.3,361L305.6,364.5L311,377.6L306.5,382.4L304.4,400L310.6,407.5L307.4,410.2L318.9,425.6L306.7,430.3L302,439.6L299.5,434L291.1,437.7L285.4,434.8L282.2,428.1L278.8,430.1L271.2,417.5L268,405.5L258.9,407L249.6,413L246.9,409.3L252.4,404.3L250.8,397Z",[277.9,387.1]],"a-coruna":["M147.4,12.5L144.8,26L133.5,47.2L135.6,60.5L130.7,69.2L122,68L109.9,74.8L101.9,74.5L95.7,77.7L80.8,85.7L81.6,75.6L87.9,70.3L76,69.4L77.6,62.6L69.6,61.1L70.5,53.2L76.5,44L87.6,42.4L85.4,39.2L93.4,36.1L98.5,38.9L107.2,37.6L118,32.6L122.3,37.7L123.2,31.4L117.2,27.5L120.7,22.8L138,10L139.5,14.6ZM81.3,91.4L81.3,91.4L81.3,91.4Z",[109.5,50.1]],"cuenca":["M382.1,301.7L376.9,299.8L372.6,291.9L373.7,280.9L362.7,266L364.2,258.7L360.9,253.7L365.5,247.7L377.4,244.7L379.7,228.9L392.6,230.1L393.4,224.7L401.4,220.8L404.1,215.8L409.9,214.9L421.2,218.8L427.4,231.3L445.4,247.2L449.2,255.4L459.6,255.5L460.8,258L457.7,259.6L457.5,268.6L452.9,277.6L450,276.4L443.6,284.7L443.8,294.2L430.7,303.4L410.9,303.7L400.6,307L393.6,300Z",[408.9,264.2]],"girona":["M599,101L599.1,96.6L592.9,89.3L602.7,91.1L607.1,97.8L618.1,91.2L627.8,94.9L638.5,96L637.3,93.1L647.2,87.2L655.3,86.2L661.6,93.1L668.9,95.3L662.4,99.3L660.8,108L665.2,111.6L665.9,123.2L658.8,131L646.6,140.2L646.1,134.7L634.7,136.5L625.6,131.6L624.4,126.3L629.4,126.1L631.3,114.8L620.3,110.2L607.3,110.6L609.9,101.5ZM608.1,113.1L608.1,113.1L608.1,113.1ZM604.5,89L604.5,89L604.5,89Z",[639.5,110.2]],"granada":["M330.3,468.5L327.7,460.9L318.9,458.6L304.8,450.5L302,439.6L306.7,430.3L318.9,425.6L327.1,426.6L329.6,421.5L344.3,411.7L349.7,415.1L361.3,410L371,412.6L375.1,408.4L380.9,392.2L390.4,386.3L392.6,381.2L403.4,384.8L410.3,391.8L406.2,393.8L405.1,410.9L403,417.4L398.1,418.3L388.6,426.2L387.8,437.6L378.3,433.3L373.1,445.1L368.9,444.1L371.6,453.1L366.9,457.8L369,461.5L363.9,467.5L353,468.4L348.9,471.3L339.5,468.2Z",[356.2,431.4]],"guadalajara":["M342.1,182.8L348.9,177L358.3,173.7L365.3,175.7L374.3,172.5L374.7,175.5L385.5,177.7L396.7,189.3L414.5,183.2L419,181.5L435.9,195.9L439.6,204L440.2,212.3L437.3,220.4L433.6,218.7L432.8,225.5L427.4,231.3L421.2,218.8L409.9,214.9L404.1,215.8L401.4,220.8L393.4,224.7L392.6,230.1L379.7,228.9L377.4,244.7L365.5,247.7L363.3,239.5L360.3,242.7L362.3,231.8L358.9,224.7L354.1,223.3L352.5,216.6L345.7,213.4L343.9,207L348.2,194.9L347.6,188.1ZM350,217.1L350,217.1L350,217.1Z",[386.9,204.9]],"gipuzkoa":["M403,70.4L395.5,66.5L386.3,65L388.8,58.2L394.9,43.1L406,45L418.3,41.7L424,37.9L427.1,44.2L419.1,49.8L419.2,54.7L414,58.8L413,64.7Z",[405.2,54.5]],"huelva":["M170.5,370.6L177.4,372.8L176.4,377.1L185.9,378.3L187.6,383L196.4,381.2L208.1,389.1L210.7,397.9L205.9,401.7L192.7,402.5L189.3,408.8L196.5,410.1L200.8,421.5L196.5,427.7L199.1,430.3L196.2,443.7L198.5,456.2L196.5,463.1L189.6,451.5L179,443.5L163.9,435.6L143.6,435.8L141.5,416.1L138.7,411.7L144.3,398.9L149.8,395L153.2,384.9L166.5,382.5Z",[174.5,411.6]],"huesca":["M467.1,78.9L469.1,72L475,67.1L484.6,75.1L494.8,71L510.1,81L518.3,77.3L524.1,81.2L541.3,79.2L546.7,84.1L543.5,92.3L547.8,100.9L543.4,123.7L539.1,128.4L541.4,132.2L528.6,145L534.6,153.8L529.7,162.7L525,161.6L518.7,166.9L510.2,165.9L505.4,152L501.3,153.3L488.3,142.6L487.5,136.7L480.4,129.2L469.4,126.5L475.6,116.6L475.7,102.6L472.3,109.6L467.4,110.3L471.9,101.2L467.5,98.6Z",[507.9,112.5]],"jaen":["M305.6,364.5L306.3,361L326.3,362.9L328.9,359.8L338.4,361.6L340.3,357.9L345.9,361.3L350.7,356.3L369.5,360.1L381.6,352.4L391.6,355L395.8,360.9L397.9,374.7L392.6,381.2L390.4,386.3L380.9,392.2L375.1,408.4L371,412.6L361.3,410L349.7,415.1L344.3,411.7L329.6,421.5L327.1,426.6L318.9,425.6L307.4,410.2L310.6,407.5L304.4,400L306.5,382.4L311,377.6Z",[347.5,385.8]],"leon":["M173.5,93L176.9,83L185.5,73.1L186.5,67.2L199.8,67.8L208.8,58.7L214.9,62L221.9,57.8L227,58.7L233,65.4L238.5,60.4L249.6,62L254.8,57.8L262.6,58.3L275.8,49.3L280.5,52.3L285.3,62.6L282.6,64.8L275.7,80.4L278.7,82.8L276.5,103.8L272.1,109.7L267.8,108.4L259.5,114.6L253.6,113.8L253.9,125.5L251.7,126.1L247.1,121.7L241,119.2L226.4,119.5L214.1,117.7L208.6,114.2L201.3,115.1L186.9,109.9L189.6,103.2L184.4,100L186.3,96ZM257.2,110.8L257.2,110.8L257.2,110.8Z",[232.6,87.5]],"lleida":["M532.4,171L529.7,162.7L534.6,153.8L528.6,145L541.4,132.2L539.1,128.4L543.4,123.7L547.8,100.9L543.5,92.3L546.7,84.1L541.3,79.2L543.1,68.1L553.9,72.2L562.4,72.9L565.3,76.9L574.3,75.6L580.4,88.9L579.5,93.3L592.9,89.3L599.1,96.6L599,101L591,102.8L594.5,108.8L591.8,118.3L594.2,122.2L587.5,129.2L586.9,136.3L581,134.6L580.2,149.3L571.8,150.2L560.3,164.6L542.6,169.5L536,167.1ZM590.3,114L590.3,114L590.3,114ZM592.5,114.5L592.5,114.5L592.5,114.5ZM594.7,127.8L594.7,127.8L594.7,127.8Z",[562.2,120.1]],"la-rioja":["M372,127.2L361.7,115.8L362.7,103.8L365.5,100L361.2,93.8L363.7,87.4L374.4,87.4L382.8,90.3L384.4,97.3L395.3,96.9L411.3,105.8L419.4,106.9L431.1,118L424.3,118L420.2,124.2L423.2,127.4L422.8,130.1L416.9,133.4L410.4,130.6L408.1,123.9L400.5,119L394.8,119.5L388.1,128.8L380.1,128.1L381.9,123ZM367.8,89.1L367.8,89.1L367.8,89.1ZM370.8,89.1L370.8,89.1L370.8,89.1Z",[390.2,110.7]],"lugo":["M133.2,86.7L136.7,78.6L130.7,69.2L135.6,60.5L133.5,47.2L144.8,26L147.4,12.5L151.3,16.7L154.1,13.2L163.3,17.4L166,22.5L178.1,26.1L171,36.4L180.2,48.3L186.8,53.7L180.1,59.7L186.5,67.2L185.5,73.1L176.9,83L173.5,93L167.1,104.6L166.4,100.6L158.5,97.3L151.3,100.2L133.3,90.2Z",[157.6,60.1]],"madrid":["M311.8,213.4L316.2,206.7L320.6,207.3L325.6,195.1L330.4,193.4L342.1,182.8L347.6,188.1L348.2,194.9L343.9,207L345.7,213.4L352.5,216.6L354.1,223.3L358.9,224.7L362.3,231.8L360.3,242.7L363.3,239.5L365.5,247.7L360.9,253.7L343.9,254.8L329,265.2L325.7,262.5L338.2,254.5L338.9,250.9L322,245.7L310.7,239L305,243.8L302.1,237.9L297.5,242.8L291,243.8L292.7,235.8L297.2,237.2L303.3,231.6L303.7,222.4ZM350,217.1L350,217.1L350,217.1ZM306.2,214.2L304,216L306.2,214.2Z",[333.5,226.4]],"malaga":["M253.5,495.3L244.5,480.8L239,481.2L250.2,471.9L253.3,458.4L258.3,462.3L262.7,457.2L259.9,450.8L278.5,441.2L285.4,434.8L291.1,437.7L299.5,434L302,439.6L304.8,450.5L318.9,458.6L327.7,460.9L330.3,468.5L315.4,467.8L298.3,469.4L285.6,483.1L274.3,483L257.5,488.7Z",[281.4,463.4]],"murcia":["M440.5,426.1L429.4,421.3L420.6,407.4L422.3,394.7L410.3,391.8L403.4,384.8L409.8,373.3L418,366.5L421.3,368L435.3,361.7L441.2,365.7L446.7,361.3L445.4,351.3L447.8,343.7L460.9,336.5L469.1,342.7L470,353L466.7,362.8L472.7,368.4L469.5,376.1L475.7,388.5L484.1,394.5L479.4,403L487.7,408.1L476.6,413.6L473,410.9L464.1,414.8L455.9,413.6Z",[447,385.6]],"navarra":["M395.3,96.9L393.7,86.7L401.4,86L399.7,81.6L403,70.4L413,64.7L414,58.8L419.2,54.7L419.1,49.8L427.1,44.2L441.9,45.2L443.7,48L439.6,57.1L445.4,56.9L464.7,65.2L473.8,64.1L475,67.1L469.1,72L467.1,78.9L455.4,85.4L446.8,100L444.3,108.6L444.6,119.3L449.2,124.6L443.9,133.1L435.4,132.4L423.2,127.4L420.2,124.2L424.3,118L431.1,118L419.4,106.9L411.3,105.8ZM454.5,99.7L454.5,99.7L454.5,99.7ZM456.9,98.2L456.9,98.2L456.9,98.2Z",[431.5,84.8]],"ourense":["M119.1,113.5L120.9,107.7L116.2,107L113.3,91.4L121.6,86.6L133.2,86.7L133.3,90.2L151.3,100.2L158.5,97.3L166.4,100.6L167.1,104.6L173.5,93L186.3,96L184.4,100L189.6,103.2L186.9,109.9L179.4,114.7L174.6,121.1L176.6,127.8L167,127.6L166.3,133.4L154.9,137.6L153.9,133.8L146,135.7L141.9,130.6L126.9,134.9L119.5,135.3L117.3,129L124,122.7Z",[147.6,112.2]],"asturias":["M178.1,26.1L228.5,25.5L234.1,20.6L243.1,28.2L254,27.6L263.2,33L276.3,34.1L296.1,38.7L295.6,46L285.9,47.4L280.5,52.3L275.8,49.3L262.6,58.3L254.8,57.8L249.6,62L238.5,60.4L233,65.4L227,58.7L221.9,57.8L214.9,62L208.8,58.7L199.8,67.8L186.5,67.2L180.1,59.7L186.8,53.7L180.2,48.3L171,36.4Z",[226.7,43.7]],"palencia":["M272.1,109.7L276.5,103.8L278.7,82.8L275.7,80.4L282.6,64.8L285.3,62.6L298.4,60.2L308.8,67.2L311.3,76.1L316.2,79.6L307,85.3L305.6,92L308.4,99.3L304.9,99.1L310.1,120.1L320.8,125.6L318.4,131.8L325.2,129L315.7,137.1L317.9,143.8L307.4,141.4L304.6,144.1L295.7,143.5L287.8,135L281.9,140.3L278.2,133L271.7,132.4L276.6,123.4L270.8,118.4ZM307.7,81L307.7,81L307.7,81ZM318.2,122.3L318.2,122.3L318.2,122.3ZM315.4,119.7L315.4,119.7L315.4,119.7ZM320.1,79.1L317.9,79.3L320.1,79.1ZM314.8,76.1L314.8,76.1L314.8,76.1ZM312.4,75.9L312.4,75.9L312.4,75.9Z",[294.3,104.7]],"las-palmas":["M181.9,668.3L179.5,676.1L169.3,681L162.1,677.5L156,669.6L156.6,663L163.8,654.1L180.5,652.6ZM240,660.4L232.4,658.2L247.7,649.5L248.8,642.2L259.5,619.6L266.2,614.3L270.2,624.9L268.7,637.8L264.6,647.6L247.8,653ZM270.1,615.5L270.1,615.5L270.1,615.5ZM276.8,603.8L266.9,607.7L270.3,596.4L292.4,585.2L288.4,598.7ZM288.5,582.2L288.5,582.2L288.5,582.2ZM286.3,571.7L286.3,571.7L286.3,571.7Z",[225.5,642.3]],"pontevedra":["M84.3,98.6L84.3,98.6L84.3,98.6ZM85,107.9L85,107.9L85,107.9ZM95.7,77.7L101.9,74.5L109.9,74.8L122,68L130.7,69.2L136.7,78.6L133.2,86.7L121.6,86.6L113.3,91.4L116.2,107L120.9,107.7L119.1,113.5L112.4,117.8L103.2,117.6L85.8,130.1L85.3,114.4L98,103.7L91.1,106L91.3,100.9L98.1,94.9L89.3,97.1L91.4,84.8ZM88.2,87.8L88.2,87.8L88.2,87.8Z",[107.6,95]],"salamanca":["M199.6,172.3L204.8,173L216.1,179.6L222.2,179L224.9,183.1L227.7,176.8L239.4,176.6L255.1,185.2L257.1,181L265.1,184.4L266.7,193.1L260.3,208.4L252.1,213.6L245.2,229.7L243,226.2L236.5,229.6L234.1,237.8L231.3,234.1L224.2,238.4L216.5,233.4L211.6,225.1L194.9,233.3L192.2,238.2L178.6,237.8L182.9,231.9L179.7,226.1L182.9,212.7L182.6,198.4L177,188.7L183,188.5L191.3,175.1Z",[218.9,204.3]],"santa-cruz-de-tenerife":["M34.2,682.3L31.3,685.1L22.7,680.5L36.8,672.3ZM37.8,624.2L33,612.2L38,607.1L46,608.5L48.9,614.7L42.4,633ZM70.7,657.9L74.8,649.1L83.8,657.1L75.5,661.8ZM110,663.1L99,650.4L94.4,640.1L116.9,636.6L127.9,626.4L139.7,628.1L125.6,640.7L122.3,653.9Z",[89.5,641.9]],"cantabria":["M285.3,62.6L280.5,52.3L285.9,47.4L295.6,46L296.1,38.7L307.1,39.1L329.1,32.2L332.8,34.5L339.2,31.1L347.4,37.6L360.1,41.4L357.5,45.9L351.1,45.2L346.1,48.9L347.6,55.6L336.7,52.6L331.6,58.7L327.4,58.8L321.7,65.2L323.6,70.5L328.2,68.8L328.5,77.3L320.1,79.1L317.9,79.3L316.2,79.6L311.3,76.1L308.8,67.2L298.4,60.2ZM312.4,75.9L312.4,75.9L312.4,75.9ZM314.8,76.1L314.8,76.1L314.8,76.1ZM354.3,47.1L354.3,47.1L354.3,47.1Z",[318.3,51.6]],"segovia":["M284.6,183.5L291.9,175.6L297,174.5L294.8,167.8L319.8,160.1L320.8,155.7L331,163.8L335.7,157.2L342,156.2L352.2,163.6L351.5,167.8L358.3,173.7L348.9,177L342.1,182.8L330.4,193.4L325.6,195.1L320.6,207.3L316.2,206.7L311.8,213.4L306.2,214.2L304,216L299.1,216.9L298.5,209.9L293,204.5L292.2,196L285.5,189.8Z",[317.2,182.6]],"sevilla":["M198.5,456.2L196.2,443.7L199.1,430.3L196.5,427.7L200.8,421.5L196.5,410.1L189.3,408.8L192.7,402.5L205.9,401.7L210.7,397.9L208.1,389.1L219.8,385.9L222,377.7L233.5,374.2L233,380.5L238.7,377.5L250.8,397L252.4,404.3L246.9,409.3L249.6,413L258.9,407L268,405.5L271.2,417.5L278.8,430.1L282.2,428.1L285.4,434.8L278.5,441.2L259.9,450.8L255.1,454.7L251.7,449.6L244.6,454.9L243.1,451.2L237.1,456.1L233,452L223.6,455.8L220.9,459.8ZM266.6,412.8L266.6,412.8L266.6,412.8Z",[233.2,422.6]],"soria":["M358.3,173.7L351.5,167.8L352.2,163.6L342,156.2L346,155.4L356.3,137.6L359.8,142.2L367.1,136L372,127.2L381.9,123L380.1,128.1L388.1,128.8L394.8,119.5L400.5,119L408.1,123.9L410.4,130.6L416.9,133.4L422.8,130.1L427,145.7L420.2,154L416.8,153.8L419.6,166.3L411.6,163.9L408.5,172.2L409.9,180.9L414.5,183.2L396.7,189.3L385.5,177.7L374.7,175.5L374.3,172.5L365.3,175.7Z",[388.1,152.9]],"tarragona":["M541.1,219.4L529.7,209.3L523.6,206.6L528.6,200.7L528.1,188L525.1,184.7L532.4,171L536,167.1L542.6,169.5L560.3,164.6L571.8,150.2L580.2,149.3L584.4,154.8L593.9,173.2L577,178.5L571.4,183.4L562.2,185L549.2,201.1L557.9,205.1L551.9,211.5L544.9,212.8ZM593.2,165.6L593.2,165.6L593.2,165.6Z",[554.6,181.7]],"teruel":["M427.4,231.3L432.8,225.5L433.6,218.7L437.3,220.4L440.2,212.3L439.6,204L435.9,195.9L442.6,191.1L452.6,188.3L455.4,182.8L466.5,182.1L480.5,183.8L484.5,178.5L484.4,170.1L489.2,167.8L517.1,184.8L525.1,184.7L528.1,188L528.6,200.7L523.6,206.6L517.5,209.6L505.6,204.1L503,210.2L496.7,212.3L501.1,215.3L501.9,229.6L492.2,240.4L489.7,239L486.7,250.8L479.5,253.1L475.5,259.1L478,263.3L472.5,264.3L469.5,257.5L460.8,258L459.6,255.5L464.1,252.2L452.1,243.2L445.4,247.2Z",[475.9,212.7]],"toledo":["M272.5,296.6L271.9,296.6L259.5,283.2L262.9,275.8L261.6,270.4L254.5,272.7L253.9,264.2L249.9,265.1L253.6,249.8L269.9,250.4L285.2,239.5L291,243.8L297.5,242.8L302.1,237.9L305,243.8L310.7,239L322,245.7L338.9,250.9L338.2,254.5L325.7,262.5L329,265.2L343.9,254.8L360.9,253.7L364.2,258.7L362.7,266L373.7,280.9L372.6,291.9L362,290.5L354.5,292.1L341.6,303.2L327.3,305.8L320.8,299.7L311.9,299.1L317.4,285.3L311.6,285.2L309.9,290.3L303.5,291.2L293,286.4L285.2,293.2L281.7,295.4L281.4,289L276.5,286.2Z",[311.9,271]],"valencia":["M473.7,334.3L471.8,324L462.5,325.2L456.4,317.9L461,301L452.3,299.4L443.8,294.2L443.6,284.7L450,276.4L452.9,277.6L457.5,268.6L457.7,259.6L460.8,258L469.5,257.5L472.5,264.3L478,263.3L485.1,266L485.5,271.3L491.4,268.3L495.1,273.4L499,267.8L508.6,272.5L502.4,287L502.2,292.9L508.3,307.1L509.1,314.1L518.2,326L504.6,327L489.5,340L482.9,335.7ZM445.4,247.2L452.1,243.2L464.1,252.2L459.6,255.5L449.2,255.4Z",[478.9,296.2]],"valladolid":["M265.1,184.4L257.1,181L255.3,162L260.5,158.7L255.7,152.9L252.9,143.6L258.5,129.6L253.9,125.5L253.6,113.8L259.5,114.6L267.8,108.4L272.1,109.7L270.8,118.4L276.6,123.4L271.7,132.4L278.2,133L281.9,140.3L287.8,135L295.7,143.5L304.6,144.1L307.4,141.4L317.9,143.8L320.8,155.7L319.8,160.1L294.8,167.8L297,174.5L291.9,175.6L284.6,183.5L277.7,187L270.5,182.4ZM247.1,121.7L251.7,126.1L247.1,121.7ZM257.2,110.8L257.2,110.8L257.2,110.8Z",[279.1,152.5]],"bizkaia":["M365.6,65.2L363.2,64.1L365.6,65.2ZM360.7,53.8L355.4,51.3L347.6,55.6L346.1,48.9L351.1,45.2L357.5,45.9L360.1,41.4L369.8,36L378.8,34.5L394.9,43.1L388.8,58.2L384.8,62.7L372.6,61.1L368.6,57.7L368.2,51ZM354.3,47.1L354.3,47.1L354.3,47.1Z",[374.1,48.2]],"zamora":["M199.6,172.3L214.1,154.7L208.9,148.9L197,147L197.5,130.3L190.3,130.8L176.6,127.8L174.6,121.1L179.4,114.7L186.9,109.9L201.3,115.1L208.6,114.2L214.1,117.7L226.4,119.5L241,119.2L247.1,121.7L251.7,126.1L253.9,125.5L258.5,129.6L252.9,143.6L255.7,152.9L260.5,158.7L255.3,162L257.1,181L255.1,185.2L239.4,176.6L227.7,176.8L224.9,183.1L222.2,179L216.1,179.6L204.8,173Z",[224.2,145]],"zaragoza":["M414.5,183.2L409.9,180.9L408.5,172.2L411.6,163.9L419.6,166.3L416.8,153.8L420.2,154L427,145.7L422.8,130.1L423.2,127.4L435.4,132.4L443.9,133.1L449.2,124.6L444.6,119.3L444.3,108.6L446.8,100L455.4,85.4L467.1,78.9L467.5,98.6L471.9,101.2L467.4,110.3L472.3,109.6L475.7,102.6L475.6,116.6L469.4,126.5L480.4,129.2L487.5,136.7L488.3,142.6L501.3,153.3L505.4,152L510.2,165.9L518.7,166.9L525,161.6L529.7,162.7L532.4,171L525.1,184.7L517.1,184.8L489.2,167.8L484.4,170.1L484.5,178.5L480.5,183.8L466.5,182.1L455.4,182.8L452.6,188.3L442.6,191.1L435.9,195.9L419,181.5ZM456.9,98.2L456.9,98.2L456.9,98.2ZM454.5,99.7L454.5,99.7L454.5,99.7Z",[461.5,151.2]],"ceuta":["M246.3,521L246.3,521L246.3,521Z",[246.3,521]],"melilla":["M373.8,560L373.8,560L373.8,560Z",[373.8,560]],"alava":["M374.4,87.4L365.3,79.3L360.5,79.9L362.2,73.1L356.3,74.7L356.8,67.5L363.2,70.7L365.6,65.2L363.2,64.1L360.7,53.8L368.2,51L368.6,57.7L372.6,61.1L384.8,62.7L388.8,58.2L386.3,65L395.5,66.5L403,70.4L399.7,81.6L401.4,86L393.7,86.7L395.3,96.9L384.4,97.3L382.8,90.3ZM374,80.6L378.6,85.6L390.6,86.7L387.1,80.1L375.3,77.3Z",[380.6,74.7]],"albacete":["M381.6,352.4L387.8,339.3L381.5,329.9L375.7,327.1L379.1,317.1L377.3,313.6L383.1,305L382.1,301.7L393.6,300L400.6,307L410.9,303.7L430.7,303.4L443.8,294.2L452.3,299.4L461,301L456.4,317.9L462.5,325.2L471.8,324L473.7,334.3L474.6,339.9L469.1,342.7L460.9,336.5L447.8,343.7L445.4,351.3L446.7,361.3L441.2,365.7L435.3,361.7L421.3,368L418,366.5L409.8,373.3L403.4,384.8L392.6,381.2L397.9,374.7L395.8,360.9L391.6,355Z",[420.8,333]],"alicante":["M484.1,394.5L475.7,388.5L469.5,376.1L472.7,368.4L466.7,362.8L470,353L469.1,342.7L474.6,339.9L473.7,334.3L482.9,335.7L489.5,340L504.6,327L518.2,326L530.3,331L530.4,335.7L513.5,349L502.4,355.3L495.8,363.2L496.1,371.1L491,372.9L489.3,385.3Z",[492.3,353.6]],"almeria":["M363.9,467.5L369,461.5L366.9,457.8L371.6,453.1L368.9,444.1L373.1,445.1L378.3,433.3L387.8,437.6L388.6,426.2L398.1,418.3L403,417.4L405.1,410.9L406.2,393.8L410.3,391.8L422.3,394.7L420.6,407.4L429.4,421.3L440.5,426.1L432.2,435.7L427.5,454L415.9,468.2L412.4,469L405.8,461.8L393.2,463.1L388.7,470.7L377.9,470.9L373.7,467.5Z",[404.2,438.4]],"avila":["M234.1,237.8L236.5,229.6L243,226.2L245.2,229.7L252.1,213.6L260.3,208.4L266.7,193.1L265.1,184.4L270.5,182.4L277.7,187L284.6,183.5L285.5,189.8L292.2,196L293,204.5L298.5,209.9L299.1,216.9L304,216L306.2,214.2L311.8,213.4L303.7,222.4L303.3,231.6L297.2,237.2L292.7,235.8L291,243.8L285.2,239.5L269.9,250.4L253.6,249.8L253.4,240.2L244.1,244.5Z",[273,220.9]],"badajoz":["M170.5,370.6L162.6,372.8L151.6,355L155.7,343.2L155.2,336.7L167,327.3L171.4,318.1L170.1,313.8L161.9,312.2L158.1,301.1L167.5,291.2L182.2,298.9L181,307.8L200.4,310L212,318.8L218.4,312.6L218.8,317.3L230.8,312.5L239,315L238.7,309.3L250.1,310.5L252.6,300.2L262,301.2L263.8,296.9L271.9,296.6L272.5,296.6L281.7,295.4L285.2,293.2L281.4,301.5L286.9,311.6L278.8,309.3L276.2,320.1L271,318.3L277.3,326.6L270.3,337.4L266.6,339.5L250,348.6L239.9,358.1L241.8,369.1L238.7,377.5L233,380.5L233.5,374.2L222,377.7L219.8,385.9L208.1,389.1L196.4,381.2L187.6,383L185.9,378.3L176.4,377.1L177.4,372.8Z",[211.7,339.4]],"illes-balears":["M592.4,329.7L592.4,329.7L592.4,329.7ZM590.9,322.3L590.9,326L580.9,322.4L587.7,310.5L596.1,307.2L600.7,312.2ZM590.7,338.4L592.6,330.6L595.7,334.9ZM632.8,275.6L632.8,275.6L632.8,275.6ZM647.4,276.2L644.2,282.2L635.1,273.2L646,265.4L653.3,257.4L663.2,251L671.5,249.6L673.9,260L679.1,262.1L683.4,257.9L689,260.3L689.4,266.1L682.3,276.7L679.4,286.1L671.2,292.7L666.5,287L657.8,287.4L655.2,278.4ZM666.7,302.2L666.7,302.2L666.7,302.2ZM723,250.3L712.7,245.8L706.1,247.4L705.4,239.2L722.3,237.2L730.4,248.2L728.9,252.9Z",[663.4,272.6]],"barcelona":["M593.9,173.2L584.4,154.8L580.2,149.3L581,134.6L586.9,136.3L587.5,129.2L594.2,122.2L591.8,118.3L594.5,108.8L591,102.8L599,101L609.9,101.5L607.3,110.6L620.3,110.2L631.3,114.8L629.4,126.1L624.4,126.3L625.6,131.6L634.7,136.5L646.1,134.7L646.6,140.2L622.9,154.2L617.4,164.9ZM594.7,127.8L594.7,127.8L594.7,127.8ZM593.2,165.6L593.2,165.6L593.2,165.6ZM608.1,113.1L608.1,113.1L608.1,113.1ZM592.5,114.5L592.5,114.5L592.5,114.5ZM590.3,114L590.3,114L590.3,114Z",[608,137.7]],"burgos":["M320.8,155.7L317.9,143.8L315.7,137.1L325.2,129L318.4,131.8L320.8,125.6L310.1,120.1L304.9,99.1L308.4,99.3L305.6,92L307,85.3L316.2,79.6L317.9,79.3L320.1,79.1L328.5,77.3L328.2,68.8L323.6,70.5L321.7,65.2L327.4,58.8L331.6,58.7L336.7,52.6L347.6,55.6L355.4,51.3L360.7,53.8L363.2,64.1L365.6,65.2L363.2,70.7L356.8,67.5L356.3,74.7L362.2,73.1L360.5,79.9L365.3,79.3L374.4,87.4L363.7,87.4L361.2,93.8L365.5,100L362.7,103.8L361.7,115.8L372,127.2L367.1,136L359.8,142.2L356.3,137.6L346,155.4L342,156.2L335.7,157.2L331,163.8ZM318.2,122.3L318.2,122.3L318.2,122.3ZM315.4,119.7L315.4,119.7L315.4,119.7ZM307.7,81L307.7,81L307.7,81ZM370.8,89.1L370.8,89.1L370.8,89.1ZM367.8,89.1L367.8,89.1L367.8,89.1ZM374,80.6L375.3,77.3L387.1,80.1L390.6,86.7L378.6,85.6Z",[339.7,105.2]]};
+const CIS = {PSOE:[33.3,134,143],PP:[25.5,98,106],VOX:[18.4,57,65],FA:[4.7,7,11],ERC:[3.1,10,14],BILDU:[1.8,7,10],BNG:[1.5,2,3],AA:[1.5,3,4],COMP:[1.6,4,6],JUNTS:[1.2,2,4],POD:[1.1,0,1],PNV:[0.7,2,4],UPC:[0.2,0,2],CC:[null,0,0]};
+const P = {
+  PSOE:["PSOE","izq","#e1251b"], PP:["PP","der","#1d6fd1"], VOX:["Vox","der","#5a9e1c"],
+  FA:["Frente Amplio / IU","izq","#d6336c"], POD:["Podemos","izq","#6c2b84"], ERC:["ERC","izq","#e8a800"],
+  BILDU:["EH Bildu","izq","#00a19a"], BNG:["BNG","izq","#59a7dc"], AA:["Adelante Andalucía","izq","#1f8f4e"],
+  COMP:["Compromís","izq","#f08a00"], UPC:["UPC (Canarias)","izq","#a33fa0"], JUNTS:["Junts","bis","#1fb8a8"],
+  PNV:["PNV","bis","#2d7a3e"], CC:["Coalición Canaria","der","#e0bf00"], SALF:["SALF","der","#8a6d5a"],
+  SY:["Soria ¡Ya!","otr","#7a7a7a"], TE:["Teruel Existe","otr","#4d6b2e"], PACMA:["PACMA","otr","#2e9e6a"]
+};
+const ORDER = ["PSOE","PP","VOX","FA","ERC","BILDU","COMP","JUNTS","BNG","AA","PNV","POD","UPC","CC","SALF","SY","TE","PACMA"];
+const SEQ = ["POD","FA","BILDU","BNG","ERC","COMP","AA","UPC","PSOE","PNV","JUNTS","SY","TE","PACMA","CC","PP","VOX","SALF"];
+let src="c", bloc="izq", prov="murcia";
+const fmt=(x,d=1)=>x.toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d});
+const SVGNS="http://www.w3.org/2000/svg";
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function parties(p,s){ return D[p].p.map(([k,c,b])=>({k, v: s==="c"?c:b})); }
+function dhondt(ps,esc){
+  const q=[]; ps.forEach(x=>{ if(x.v>=3) for(let i=1;i<=esc;i++) q.push({k:x.k,q:x.v/i}); });
+  q.sort((a,b)=>b.q-a.q);
+  const won=q.slice(0,esc), seats={}; won.forEach(x=>seats[x.k]=(seats[x.k]||0)+1);
+  return {seats,won};
+}
+const NAT={c:{},b:{}};
+for(const s of ["c","b"]) for(const p in D){ const {seats}=dhondt(parties(p,s),D[p].e); for(const k in seats) NAT[s][k]=(NAT[s][k]||0)+seats[k]; }
+
+function contest(ps,won,seats,k){
+  const others=won.filter(x=>x.k!==k); if(!others.length) return null;
+  const victim=others[others.length-1], me=ps.find(x=>x.k===k), s=seats[k]||0;
+  return {k, victim:victim.k, need:Math.max(victim.q*(s+1)-me.v, 3-me.v, 0.05)};
+}
+function analyse(p){
+  const ps=parties(p,src), {seats,won}=dhondt(ps,D[p].e);
+  const mine=k=>P[k][1]===bloc;
+  const gains=ps.filter(x=>mine(x.k)).map(x=>contest(ps,won,seats,x.k)).filter(Boolean).map(o=>({...o,net:!mine(o.victim)})).sort((a,b)=>a.need-b.need);
+  const threats=ps.filter(x=>!mine(x.k)).map(x=>contest(ps,won,seats,x.k)).filter(o=>o&&mine(o.victim)).sort((a,b)=>a.need-b.need);
+  return {ps,seats,won,gains,bestGain:gains.find(o=>o.net),bestThreat:threats[0]};
+}
+const closeness=x=>x<1?["t1","muy ajustado"]:x<3?["t2","ajustado"]:["t3","lejos"];
+
+/* ---------- hemiciclo ---------- */
+const hemi=document.getElementById("hemi");
+const SEATS=(()=>{ // 350 puntos en 10 filas
+  const rows=9, r0=96, r1=190, pts=[]; const radii=[...Array(rows)].map((_,i)=>r0+(r1-r0)*i/(rows-1));
+  const tot=radii.reduce((a,b)=>a+b,0); let counts=radii.map(r=>Math.round(350*r/tot)); let diff=350-counts.reduce((a,b)=>a+b,0); counts[rows-1]+=diff;
+  radii.forEach((r,i)=>{ const n=counts[i]; for(let j=0;j<n;j++){ const a=Math.PI*(1-j/(n-1)); pts.push({x:200+r*Math.cos(a), y:200-r*Math.sin(a), a}); } });
+  return pts.sort((p,q)=>q.a-p.a);
+})();
+SEATS.forEach(s=>{ const c=document.createElementNS(SVGNS,"circle"); c.setAttribute("cx",s.x.toFixed(1)); c.setAttribute("cy",s.y.toFixed(1)); c.setAttribute("r","4.4"); c.setAttribute("fill","var(--line)"); hemi.appendChild(c); s.el=c; });
+const ctext=document.createElementNS(SVGNS,"text"); ctext.setAttribute("x","200"); ctext.setAttribute("y","192"); ctext.setAttribute("text-anchor","middle"); ctext.setAttribute("class","hemi-center num"); hemi.appendChild(ctext);
+const csub=document.createElementNS(SVGNS,"text"); csub.setAttribute("x","200"); csub.setAttribute("y","210"); csub.setAttribute("text-anchor","middle"); csub.setAttribute("class","hemi-sub"); hemi.appendChild(csub);
+
+function countTo(el,to){
+  const from=+el.dataset.v||0; el.dataset.v=to;
+  if(reduce){ el.textContent=to; return; }
+  const t0=performance.now();
+  (function step(t){ const k=Math.min(1,(t-t0)/600); el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(step); })(t0);
+}
+function renderNational(){
+  const t=NAT[src], seq=[]; SEQ.forEach(k=>{ for(let i=0;i<(t[k]||0);i++) seq.push(k); });
+  SEATS.forEach((s,i)=>{ const k=seq[i]; setTimeout(()=>s.el.setAttribute("fill",k?P[k][2]:"var(--line)"), reduce?0:i*2); s.el.dataset.k=k; });
+  const bl={izq:0,der:0,bis:0}; for(const k in t){ const b=P[k][1]; bl[b==="otr"?"bis":b]+=t[k]; }
+  const pd=(t.PP||0)+(t.VOX||0);
+  const lead=Object.keys(t).sort((a,b)=>t[b]-t[a])[0];
+  countTo(ctext,t[lead]); csub.textContent="ESCAÑOS "+P[lead][0].toUpperCase();
+  const B=document.getElementById("blocs");
+  if(!B.children.length) B.innerHTML=`<div class="bloc izq"><b class="num" id="b-izq">0</b><small>Izquierda</small></div><div class="bloc bis"><b class="num" id="b-bis">0</b><small>PNV y Junts</small></div><div class="bloc der"><b class="num" id="b-der">0</b><small>Derecha</small></div>`;
+  countTo(document.getElementById("b-izq"),bl.izq); countTo(document.getElementById("b-bis"),bl.bis); countTo(document.getElementById("b-der"),bl.der);
+  const mc=document.getElementById("majchip");
+  mc.textContent = pd>=176 ? `PP + Vox: ${pd}. Mayoría absoluta (176)` : `PP + Vox: ${pd}. Les faltan ${176-pd} para la mayoría`;
+  document.getElementById("legend").innerHTML=ORDER.filter(k=>t[k]).map(k=>`<span><i class="dot" style="background:${P[k][2]};margin:0"></i>${P[k][0]} <b>${t[k]}</b></span>`).join("");
+  const rows=ORDER.filter(k=>NAT.c[k]||NAT.b[k]||CIS[k]);
+  document.getElementById("tbody").innerHTML=rows.map(k=>{
+    const c=CIS[k], pc=NAT.c[k]||0, pb=NAT.b[k]||0;
+    return `<tr><td><span class="dot" style="background:${P[k][2]}"></span>${P[k][0]}</td><td class="num">${c&&c[0]!=null?fmt(c[0])+" %":"—"}</td><td class="num">${c?(c[1]===c[2]?c[1]:c[1]+"–"+c[2]):"—"}</td><td class="num"><b>${pc}</b></td><td class="num">${pb}</td></tr>`;
+  }).join("");
+}
+
+/* ---------- mapa ---------- */
+const map=document.getElementById("map"), tip=document.getElementById("tip");
+const box=document.createElementNS(SVGNS,"rect"); box.setAttribute("class","canbox"); box.setAttribute("x","14"); box.setAttribute("y","562"); box.setAttribute("width","290"); box.setAttribute("height","132"); box.setAttribute("rx","8"); map.appendChild(box);
+const SHAPES={};
+for(const p in MAP){
+  const [d,c]=MAP[p]; const small=(p==="ceuta"||p==="melilla");
+  const el=document.createElementNS(SVGNS,"path"); el.setAttribute("d",d); el.setAttribute("class","prov"); el.setAttribute("tabindex","0"); el.setAttribute("role","button"); el.setAttribute("aria-label",D[p].n);
+  map.appendChild(el); SHAPES[p]=[el];
+  if(small){ const ci=document.createElementNS(SVGNS,"circle"); ci.setAttribute("cx",c[0]); ci.setAttribute("cy",c[1]); ci.setAttribute("r","9"); ci.setAttribute("class","cm"); map.appendChild(ci); SHAPES[p].push(ci); }
+  SHAPES[p].forEach(s=>{
+    s.addEventListener("click",()=>select(p,true));
+    s.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); select(p,true);} });
+    s.addEventListener("mousemove",e=>showTip(p,e)); s.addEventListener("mouseleave",()=>tip.style.opacity=0);
+  });
+}
+function showTip(p,e){
+  const r=map.parentElement.getBoundingClientRect(); const ws=winners(p);
+  tip.textContent=`${D[p].n} · ${ws.map(w=>P[w.k][0]).join(" = ")} (${ws[0].s} ${ws[0].s===1?"escaño":"escaños"}${ws.length>1?" cada uno":""})`; tip.style.left=(e.clientX-r.left)+"px"; tip.style.top=(e.clientY-r.top)+"px"; tip.style.opacity=1;
+}
+const defs=document.createElementNS(SVGNS,"defs"); map.insertBefore(defs,map.firstChild);
+function winners(p){
+  const {seats}=dhondt(parties(p,src),D[p].e); const m=Math.max(...Object.values(seats));
+  return ORDER.filter(k=>seats[k]===m).map(k=>({k,s:m}));
+}
+function fillFor(ws){
+  if(ws.length===1) return P[ws[0].k][2];
+  const id="tie-"+ws.map(w=>w.k).join("-");
+  if(!document.getElementById(id)){
+    const w=8, pat=document.createElementNS(SVGNS,"pattern");
+    pat.setAttribute("id",id); pat.setAttribute("patternUnits","userSpaceOnUse"); pat.setAttribute("width",w*ws.length); pat.setAttribute("height",w*ws.length); pat.setAttribute("patternTransform","rotate(45)");
+    ws.forEach((x,i)=>{ const r=document.createElementNS(SVGNS,"rect"); r.setAttribute("x",i*w); r.setAttribute("y",0); r.setAttribute("width",w); r.setAttribute("height",w*ws.length); r.setAttribute("fill",P[x.k][2]); pat.appendChild(r); });
+    defs.appendChild(pat);
+  }
+  return `url(#${id})`;
+}
+function renderMap(){
+  for(const p in SHAPES){
+    const f=fillFor(winners(p));
+    SHAPES[p].forEach(s=>{ s.style.fill=f; s.classList.toggle("sel",p===prov); });
+  }
+  document.getElementById("mapkey").innerHTML="Color del partido que saca más escaños en cada provincia. Si dos o más empatan, la provincia sale a rayas con sus colores.";
+}
+
+/* ---------- provincia ---------- */
+function renderProvince(){
+  const d=D[prov], esc=d.e, a=analyse(prov);
+  const lastWon=a.won[a.won.length-1];
+  const dots=a.won.slice().sort((x,y)=>ORDER.indexOf(x.k)-ORDER.indexOf(y.k));
+  const dotHtml=dots.map((x,i)=>`<span class="seat${x===lastWon?" last":""}" title="${P[x.k][0]}" style="background:${P[x.k][2]};animation-delay:${reduce?0:i*30}ms"></span>`).join("");
+  const {bestGain:g,bestThreat:t}=a; let v;
+  if(t && (!g || t.need<g.need)) v=`<div class="verdict warn"><p class="tag t2">Escaño a defender</p><strong>Votar a ${P[t.victim][0]}</strong><p>A ${P[t.k][0]} le faltan <b class="num">${fmt(t.need)}</b> puntos para quitarle un escaño a ${P[t.victim][0]}.</p></div>`;
+  else if(g) v=`<div class="verdict good"><p class="tag tg">Escaño en el aire</p><strong>Votar a ${P[g.k][0]}</strong><p>Le faltan <b class="num">${fmt(g.need)}</b> puntos para quitarle un escaño a ${P[g.victim][0]}${t?`. El rival más cerca de quitarle uno a tu bloque necesita ${fmt(t.need)}.`:"."}</p></div>`;
+  else v=`<div class="verdict calm"><strong>Nada cerca</strong><p>Ningún partido de tu bloque está cerca de ganar o perder un escaño aquí.</p></div>`;
+  const opts=a.gains.slice(0,4).map(o=>{ const [c,l]=closeness(o.need);
+    return `<div class="opt"><span><span class="dot" style="background:${P[o.k][2]}"></span>${P[o.k][0]}</span><span class="tag ${c} num">+${fmt(o.need)} pts · ${l}</span><span class="sub">${o.net?`Le quitaría el escaño a ${P[o.victim][0]}`:`Se lo quitaría a ${P[o.victim][0]}, de tu mismo bloque: no suma`}</span></div>`; }).join("");
+  const max=Math.max(...a.ps.map(x=>x.v));
+  const rows=a.ps.slice().sort((x,y)=>y.v-x.v).map(x=>`<tr><td><span class="dot" style="background:${P[x.k][2]}"></span>${P[x.k][0]}</td><td style="width:34%"><div class="vbar"><span style="width:${x.v/max*100}%;background:${P[x.k][2]}"></span></div></td><td class="num">${fmt(x.v)} %</td><td class="num"><b>${a.seats[x.k]||0}</b></td></tr>`).join("");
+  const note=(prov==="soria"||prov==="teruel")?`<p class="note">Aviso: aquí el partido provincial no sale en ninguna encuesta y se usa su resultado de 2023. Fiabilidad baja.</p>`:"";
+  document.getElementById("pres").innerHTML=`<div style="display:flex;flex-direction:column;gap:14px">
+    <div class="row"><h3>${d.n} · ${esc} ${esc===1?"escaño":"escaños"}</h3><span class="note">${src==="c"?"CIS":"Media de encuestas"} · discontinuo: último escaño</span></div>
+    <div class="seats" aria-label="Escaños de ${d.n}">${dotHtml}</div>
+    ${v}
+    <div class="opts">${opts||`<p class="note">Tu bloque no tiene candidaturas medidas en esta provincia.</p>`}</div>
+    <div class="tablewrap"><table><thead><tr><th>Partido</th><th></th><th>Voto</th><th>Escaños</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${note}</div>`;
+}
+
+function select(p,scroll){
+  prov=p; sel.value=p; renderMap(); renderProvince();
+  if(scroll) document.getElementById("provcard").scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});
+}
+const sel=document.getElementById("prov");
+sel.innerHTML=Object.keys(D).sort((a,b)=>D[a].n.localeCompare(D[b].n,"es")).map(p=>`<option value="${p}">${D[p].n}</option>`).join("");
+sel.addEventListener("change",e=>select(e.target.value,false));
+function bindSeg(attr,fn){ document.querySelectorAll(`[data-${attr}]`).forEach(b=>b.addEventListener("click",()=>{ document.querySelectorAll(`[data-${attr}]`).forEach(x=>x.setAttribute("aria-pressed",x===b)); fn(b.dataset[attr]); })); }
+bindSeg("src",v=>{ src=v; renderNational(); renderMap(); renderProvince(); });
+bindSeg("bloc",v=>{ bloc=v; renderMap(); renderProvince(); });
+
+/* ---------- escaños en juego ---------- */
+function lastSeat(p){
+  const ps=parties(p,src), esc=D[p].e, q=[];
+  ps.forEach(x=>{ if(x.v>=3) for(let i=1;i<=esc+1;i++) q.push({k:x.k,q:x.v/i}); });
+  q.sort((a,b)=>b.q-a.q);
+  const last=q[esc-1], seats={}; q.slice(0,esc).forEach(x=>seats[x.k]=(seats[x.k]||0)+1);
+  const nxt=q.slice(esc).find(x=>x.k!==last.k); if(!nxt) return null;
+  const v=ps.find(x=>x.k===nxt.k).v;
+  return {p, holder:last.k, chall:nxt.k, need:Math.max(last.q*((seats[nxt.k]||0)+1)-v,0.05), cross:P[last.k][1]!==P[nxt.k][1]};
+}
+function openHot(){
+  const L=Object.keys(D).map(lastSeat).filter(Boolean).sort((a,b)=>a.need-b.need);
+  const g=[["Muy ajustados · menos de 1 punto",x=>x.need<1],["Ajustados · de 1 a 3 puntos",x=>x.need>=1&&x.need<3],["Más de 3 puntos",x=>x.need>=3]];
+  const n1=L.filter(x=>x.need<1).length, nc=L.filter(x=>x.need<3&&x.cross).length;
+  document.getElementById("hotsum").textContent=`${src==="c"?"Con el CIS":"Con la media de encuestas"}: ${n1} provincias tienen el último escaño a menos de 1 punto, y en ${nc} el escaño cambiaría de bloque con menos de 3 puntos.`;
+  document.getElementById("hotlist").innerHTML=g.map(([title,f])=>{
+    const rows=L.filter(f); if(!rows.length) return "";
+    return `<div class="hgroup">${title} (${rows.length})</div>`+rows.map(x=>`<button type="button" class="hrow" data-p="${x.p}"><span><b>${D[x.p].n}</b>${x.cross?`<span class="cross">cambia de bloque</span>`:""}</span><span class="tag ${closeness(x.need)[0]} num">${fmt(x.need)} pts</span><span class="sub"><span class="dot" style="background:${P[x.holder][2]}"></span>${P[x.holder][0]} tiene el último escaño · <span class="dot" style="background:${P[x.chall][2]}"></span>${P[x.chall][0]} se lo quitaría</span></button>`).join("");
+  }).join("");
+  ov.hidden=false; document.body.style.overflow="hidden"; document.getElementById("ovclose").focus();
+}
+function closeHot(){ ov.hidden=true; document.body.style.overflow=""; }
+const ov=document.getElementById("ov");
+document.getElementById("hotbtn").addEventListener("click",openHot);
+document.getElementById("ovclose").addEventListener("click",closeHot);
+ov.addEventListener("click",e=>{ if(e.target===ov) closeHot(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!ov.hidden) closeHot(); });
+document.getElementById("hotlist").addEventListener("click",e=>{ const b=e.target.closest(".hrow"); if(b){ closeHot(); select(b.dataset.p,true); } });
+sel.value=prov; renderNational(); renderMap(); renderProvince();
+</script>
+</body>
+</html>
